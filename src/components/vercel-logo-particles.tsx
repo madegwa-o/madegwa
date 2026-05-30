@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useRef, useEffect, useState } from 'react'
-import { AWS_LOGO_PATH } from '@/lib/aws-logo-path'
 
 export default function Component() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -44,70 +43,37 @@ export default function Component() {
       ctx.fillStyle = 'white'
       ctx.save()
       
-      const logoHeight = isMobile ? 60 : 120
-      const vercelLogoWidth = logoHeight * (40 / 19.7762) // Maintain aspect ratio
-      const awsLogoWidth = logoHeight * (283 / 140) // Maintain aspect ratio
-      const logoSpacing = isMobile ? 30 : 60 // Increased gap for mobile and desktop
-      const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing
+      const fontSize = isMobile ? 60 : 120
+      const fontWeight = 'bold'
+      const fontFamily = 'sans-serif'
+      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = 'center'
       
-      ctx.translate(canvas.width / 2 - totalWidth / 2, canvas.height / 2 - logoHeight / 2)
-
-      // Draw Vercel logo
-      ctx.save()
-      const vercelScale = logoHeight / 19.7762
-      ctx.scale(vercelScale, vercelScale)
-      ctx.beginPath()
-      ctx.moveTo(23.3919, 0)
-      ctx.lineTo(32.9188, 0)
-      ctx.bezierCurveTo(36.7819, 0, 39.9136, 3.13165, 39.9136, 6.99475)
-      ctx.lineTo(39.9136, 16.0805)
-      ctx.lineTo(36.0006, 16.0805)
-      ctx.lineTo(36.0006, 6.99475)
-      ctx.bezierCurveTo(36.0006, 6.90167, 35.9969, 6.80925, 35.9898, 6.71766)
-      ctx.lineTo(26.4628, 16.079)
-      ctx.bezierCurveTo(26.4949, 16.08, 26.5272, 16.0805, 26.5595, 16.0805)
-      ctx.lineTo(36.0006, 16.0805)
-      ctx.lineTo(36.0006, 19.7762)
-      ctx.lineTo(26.5595, 19.7762)
-      ctx.bezierCurveTo(22.6964, 19.7762, 19.4788, 16.6139, 19.4788, 12.7508)
-      ctx.lineTo(19.4788, 3.68923)
-      ctx.lineTo(23.3919, 3.68923)
-      ctx.lineTo(23.3919, 12.7508)
-      ctx.bezierCurveTo(23.3919, 12.9253, 23.4054, 13.0977, 23.4316, 13.2668)
-      ctx.lineTo(33.1682, 3.6995)
-      ctx.bezierCurveTo(33.0861, 3.6927, 33.003, 3.68923, 32.9188, 3.68923)
-      ctx.lineTo(23.3919, 3.68923)
-      ctx.lineTo(23.3919, 0)
-      ctx.closePath()
-
-      ctx.moveTo(13.7688, 19.0956)
-      ctx.lineTo(0, 3.68759)
-      ctx.lineTo(5.53933, 3.68759)
-      ctx.lineTo(13.6231, 12.7337)
-      ctx.lineTo(13.6231, 3.68759)
-      ctx.lineTo(17.7535, 3.68759)
-      ctx.lineTo(17.7535, 17.5746)
-      ctx.bezierCurveTo(17.7535, 19.6705, 15.1654, 20.6584, 13.7688, 19.0956)
-      ctx.closePath()
-
-      ctx.fill()
-      ctx.restore()
-
-      // Draw AWS logo
-      ctx.save()
-      ctx.translate(vercelLogoWidth + logoSpacing, 0)
-      const awsScale = logoHeight / 140
-      ctx.scale(awsScale, awsScale)
-      const path = new Path2D(AWS_LOGO_PATH)
-      ctx.fill(path)
-      ctx.restore()
+      const text1 = 'OS'
+      const text2 = 'car'
+      const spacing = isMobile ? 30 : 60
+      
+      // Measure text widths
+      const metrics1 = ctx.measureText(text1)
+      const metrics2 = ctx.measureText(text2)
+      const totalWidth = metrics1.width + metrics2.width + spacing
+      
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      
+      // Draw "OS" text
+      ctx.fillText(text1, centerX - totalWidth / 2 + metrics1.width / 2, centerY)
+      
+      // Draw "car" text
+      ctx.fillText(text2, centerX + totalWidth / 2 - metrics2.width / 2, centerY)
 
       ctx.restore()
 
       textImageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      return Math.max(vercelScale, awsScale)
+      return 1
     }
 
     function createParticle(scale: number) {
@@ -121,14 +87,8 @@ export default function Component() {
         const y = Math.floor(Math.random() * canvas.height)
 
         if (data[(y * canvas.width + x) * 4 + 3] > 128) {
-          const logoHeight = isMobile ? 60 : 120
-          const vercelLogoWidth = logoHeight * (40 / 19.7762)
-          const awsLogoWidth = logoHeight * (283 / 140)
-          const logoSpacing = isMobile ? 30 : 60
-          const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing
           const centerX = canvas.width / 2
-          const centerY = canvas.height / 2
-          const isAWSLogo = x >= centerX + (totalWidth / 2) - awsLogoWidth
+          const isCarText = x > centerX
           return {
             x: x,
             y: y,
@@ -136,8 +96,8 @@ export default function Component() {
             baseY: y,
             size: Math.random() * 1 + 0.5,
             color: 'white', 
-            scatteredColor: isAWSLogo ? '#FF9900' : '#00DCFF', 
-            isAWS: isAWSLogo,
+            scatteredColor: isCarText ? '#FF9900' : '#00DCFF', 
+            isAWS: isCarText,
             life: Math.random() * 100 + 50
           }
         }

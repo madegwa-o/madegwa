@@ -147,6 +147,7 @@ export default function Component() {
     }
 
     function createInitialParticles(scale: number) {
+      if (!canvas) return
       const baseParticleCount = 7000 // Increased base count for higher density
       const particleCount = Math.floor(baseParticleCount * Math.sqrt((canvas.width * canvas.height) / (1920 * 1080)))
       for (let i = 0; i < particleCount; i++) {

@@ -4,27 +4,35 @@ import { useState, useEffect } from 'react';
 
 export function usePushNotifications() {
     const [subscription, setSubscription] = useState<PushSubscription | null>(null);
-    const [isSupported, setIsSupported] = useState(false);
+    const [isSupported] = useState(() =>
+        typeof window !== 'undefined' &&
+        'serviceWorker' in navigator &&
+        'PushManager' in window
+    );
     const [isSubscribed, setIsSubscribed] = useState(false);
 
     useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            setIsSupported(true);
-            checkSubscription();
-        }
-    }, []);
+        if (!isSupported) return;
 
-    async function checkSubscription() {
-        try {
-            // Wait for the workbox service worker to be ready
-            const registration = await navigator.serviceWorker.ready;
-            const sub = await registration.pushManager.getSubscription();
-            setSubscription(sub);
-            setIsSubscribed(!!sub);
-        } catch (error) {
-            console.error('Error checking subscription:', error);
-        }
-    }
+        let ignore = false;
+
+        (async () => {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const sub = await registration.pushManager.getSubscription();
+                if (!ignore) {
+                    setSubscription(sub);
+                    setIsSubscribed(!!sub);
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+            }
+        })();
+
+        return () => {
+            ignore = true;
+        };
+    }, [isSupported]);
 
     async function subscribeToPush() {
         try {
@@ -34,10 +42,8 @@ export function usePushNotifications() {
                 throw new Error('Permission not granted for notifications');
             }
 
-            // Wait for workbox service worker
             const registration = await navigator.serviceWorker.ready;
 
-            // Get VAPID public key from your server
             const response = await fetch('/api/push/vapid-public-key');
             const { publicKey } = await response.json();
 
@@ -46,7 +52,6 @@ export function usePushNotifications() {
                 applicationServerKey: urlBase64ToUint8Array(publicKey),
             });
 
-            // Send subscription to your server
             await fetch('/api/push/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -68,7 +73,6 @@ export function usePushNotifications() {
             if (subscription) {
                 await subscription.unsubscribe();
 
-                // Remove subscription from your server
                 await fetch('/api/push/unsubscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

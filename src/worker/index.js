@@ -4,14 +4,14 @@
 self.addEventListener("push", (event) => {
 
     // Parse the JSON payload
-     const data = event.data.json();
+    const data = event.data.json();
     event.waitUntil(
         self.registration.showNotification(data.title, {
             body: data.body,
             icon: "/icons/android-chrome-192x192.png",
             data: {
-               url: data.url || "/"
-           },
+                url: data.url || "/"
+            },
         })
     );
 });

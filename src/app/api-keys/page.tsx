@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState } from "react"
 import GlassCard from "@/components/glass-card"
 
@@ -38,7 +39,9 @@ export default function ApiKeysPage() {
     }
 
     return (
-        <main className="min-h-dvh px-6 py-10 md:px-10">
+
+        <main className="min-h-dvh flex items-center justify-center p-6">
+            <GlassCard accent="#0022ff">
             <div className="mx-auto max-w-4xl">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                     <h1 className="text-white text-3xl font-medium">
@@ -132,6 +135,7 @@ export default function ApiKeysPage() {
                     )}
                 </GlassCard>
             </div>
+            </GlassCard>
         </main>
     )
 }

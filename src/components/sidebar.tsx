@@ -2,7 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {JSX, useState} from "react"
+import { JSX, useState } from "react"
+import { useSession, signOut } from "next-auth/react"
+import { useTheme } from "@/components/theme-provider"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface NavItem {
     id: string
@@ -80,23 +91,38 @@ function IconBriefcase({ className }: { className?: string }) {
     )
 }
 
-function IconPalette({ className }: { className?: string }) {
-    return (
-        <svg className={className} {...ICON_PROPS}>
-            <circle cx="12" cy="12" r="9" />
-            <circle cx="8.5" cy="10.5" r="1.1" fill="currentColor" stroke="none" />
-            <circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none" />
-            <circle cx="15.5" cy="10.5" r="1.1" fill="currentColor" stroke="none" />
-            <path d="M12 21a9 9 0 0 1 0-18c1 3 3 2 3 5s-3 3-3 6 3 3 0 7Z" />
-        </svg>
-    )
-}
-
 function IconDownload({ className }: { className?: string }) {
     return (
         <svg className={className} {...ICON_PROPS}>
             <path d="M12 3v12M7 10l5 5 5-5" />
             <path d="M4 19h16" />
+        </svg>
+    )
+}
+
+// Replaces IconPalette — used for the theme toggle rail button
+function IconSunMoon({ className }: { className?: string }) {
+    return (
+        <svg className={className} {...ICON_PROPS}>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+    )
+}
+
+function IconUser({ className }: { className?: string }) {
+    return (
+        <svg className={className} {...ICON_PROPS}>
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+        </svg>
+    )
+}
+
+function IconLogOut({ className }: { className?: string }) {
+    return (
+        <svg className={className} {...ICON_PROPS}>
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
         </svg>
     )
 }
@@ -107,7 +133,7 @@ const NAV_ITEMS: NavItem[] = [
     { id: "environments", label: "Environments", href: "/environments", icon: IconLayers },
     { id: "docs", label: "Docs & snippets", href: "/docs", icon: IconCode },
     { id: "team", label: "Team", href: "/team", icon: IconBriefcase },
-    { id: "appearance", label: "Appearance", href: "/appearance", icon: IconPalette },
+    // "appearance" removed — theme toggle now lives as its own rail button below
 ]
 
 function RailButton({
@@ -164,9 +190,88 @@ function RailButton({
     )
 }
 
+function getUserInitials(name: string | null | undefined) {
+    if (!name) return "U"
+    const names = name.split(" ")
+    if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase()
+    }
+    return name.substring(0, 2).toUpperCase()
+}
+
+function AccountMenu() {
+    const { data: session, status } = useSession()
+
+    const handleSignOut = async () => {
+        await signOut({ callbackUrl: "/" })
+    }
+
+    // Loading skeleton — mirrors the header's pulse state while session hydrates
+    if (status === "loading") {
+        return <div className="h-9 w-9 rounded-full bg-white/10 animate-pulse" />
+    }
+
+    // Signed out — fall back to a plain sign-in link styled like the other rail icons
+    if (!session?.user) {
+        return (
+            <Link
+                href="/auth/login"
+                aria-label="Sign in"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-white/70 transition-colors hover:bg-white/[0.14] hover:text-white"
+            >
+                <IconUser className="h-4 w-4" />
+            </Link>
+        )
+    }
+
+    // Radix's DropdownMenu closes on outside click / Escape natively —
+    // no extra useRef + mousedown listener needed like in the header.
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    aria-label="Account"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-xs font-medium text-white transition-colors hover:bg-white/[0.14]"
+                >
+                    <Avatar className="h-9 w-9">
+                        <AvatarImage src={session.user.image || undefined} alt={session.user.name || "User"} />
+                        <AvatarFallback className="bg-transparent text-white">
+                            {getUserInitials(session.user.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="end" className="w-56">
+                <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/account" className="cursor-pointer">
+                        <IconUser className="mr-2 h-4 w-4" />
+                        My Account
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                    <IconLogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
 export default function Sidebar() {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
+    const { theme, setTheme } = useTheme()
 
     if (collapsed) {
         return (
@@ -209,14 +314,15 @@ export default function Sidebar() {
             <div className="mt-auto flex flex-col items-center gap-1">
                 <RailButton icon={IconDownload} label="Export keys" onClick={() => {}} badge />
 
+                <RailButton
+                    icon={IconSunMoon}
+                    label="Toggle theme"
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                />
+
                 <div className="my-2 h-px w-8 bg-white/10" />
 
-                <button
-                    aria-label="Account"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-xs font-medium text-white transition-colors hover:bg-white/[0.14]"
-                >
-                    JD
-                </button>
+                <AccountMenu />
             </div>
         </aside>
     )

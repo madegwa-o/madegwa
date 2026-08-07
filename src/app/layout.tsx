@@ -4,7 +4,6 @@ import LogoParticles from "@/components/logo-particles"
 import Sidebar from "@/components/sidebar"
 import { API_LOGO_PATH } from "@/lib/api-logo-path"
 import { KEYS_LOGO_PATH } from "@/lib/keys-logo-path"
-import {Header} from "@/components/header";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 
@@ -175,7 +174,6 @@ export default function RootLayout({
         <AuthProvider>
             <ThemeProvider defaultTheme="system" storageKey="theme-pref">
                 <Suspense fallback={null}>
-                    <Header />
                     <Sidebar />
 
                     <div className="relative z-10 pl-16">

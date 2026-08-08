@@ -12,22 +12,27 @@ interface BeforeInstallPromptEvent extends Event {
     userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+function getIsStandalone() {
+    if (typeof window === "undefined") return false;
+
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        ("standalone" in window.navigator &&
+            (window.navigator as { standalone?: boolean }).standalone) ||
+        document.referrer.includes("android-app://")
+    );
+}
+
 export default function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showInstallPrompt, setShowInstallPrompt] = useState(false);
     const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
-    const [isStandalone, setIsStandalone] = useState(false);
+    // Computed once, lazily, during render — not effect-driven state, since
+    // display mode doesn't change over the component's lifetime.
+    const [isStandalone] = useState(getIsStandalone);
     const { isSupported, isSubscribed, subscribeToPush } = usePushNotifications();
 
     useEffect(() => {
-        const isInStandaloneMode =
-            window.matchMedia("(display-mode: standalone)").matches ||
-            ("standalone" in window.navigator &&
-                (window.navigator as { standalone?: boolean }).standalone) ||
-            document.referrer.includes("android-app://");
-
-        setIsStandalone(isInStandaloneMode);
-
         const handler = (e: Event) => {
             const promptEvent = e as BeforeInstallPromptEvent;
             promptEvent.preventDefault();

@@ -56,6 +56,11 @@ export function MediaGallery({
   }, [folder, resourceType]);
 
   useEffect(() => {
+    // loadMedia sets isLoading synchronously before its first await, which
+    // is the standard fetch-with-loading-state pattern (as in React's own
+    // docs) but trips this rule's static analysis into called functions.
+    // Suppressing here is intentional, not an oversight.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMedia();
   }, [refreshTrigger, loadMedia]);
 

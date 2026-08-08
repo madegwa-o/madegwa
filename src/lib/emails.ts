@@ -61,7 +61,7 @@ export async function sendEmail(options: EmailOptions) {
             timestamp: new Date().toISOString(),
         });
 
-        return { success: true, messageId: info.messageId };
+        return { success: true as const, messageId: info.messageId };
     } catch (error) {
         console.error("[Email] ✗ Failed to send email", {
             to: options.to,
@@ -69,7 +69,7 @@ export async function sendEmail(options: EmailOptions) {
             error: error instanceof Error ? error.message : String(error),
             timestamp: new Date().toISOString(),
         });
-        return { success: false, error };
+        return { success: false as const, error };
     }
 }
 
@@ -91,8 +91,11 @@ export async function sendBulkEmails(options: BulkEmailOptions) {
         )
     );
 
-    const successful = results.filter((r) => r.status === "fulfilled" && (r.value as any).success).length;
-    const failed = results.filter((r) => r.status === "rejected" || (r.value as any).error).length;
+    const successful = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof sendEmail>>> =>
+            r.status === "fulfilled" && r.value.success
+    ).length;
+    const failed = results.length - successful;
 
     console.log("[Email] ✓ Bulk email send complete", {
         total: options.recipients.length,

@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import InstallPrompt from "@/components/InstallPrompt";
 import { NotificationDisplay } from "@/components/notifications/notification-display";
+import { Toaster} from "sonner"
 
 // -----------------
 // Font Configuration
@@ -174,6 +175,7 @@ export default function RootLayout({
         <AuthProvider>
             <ThemeProvider defaultTheme="system" storageKey="theme-pref">
                 <Suspense fallback={null}>
+                    <Toaster />
                     <Sidebar />
 
                     <div className="relative z-10 pl-16">

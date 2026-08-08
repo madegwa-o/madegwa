@@ -20,7 +20,7 @@ const ENTRIES: ApiKeyEntry[] = [
     { id: "6", projectName: "Hackathon application", keyPreview: "sk-live-••••2b6c", updatedLabel: "Jul 24" },
 ]
 
-export default function ApiKeysPage() {
+export default function ProjectsPage() {
     const [query, setQuery] = useState("")
     const [selectMode, setSelectMode] = useState(false)
     const [selected, setSelected] = useState<Set<string>>(new Set())

@@ -4,6 +4,8 @@ import { User } from "@/models";
 import { connectToDatabase } from "@/lib/db";
 import { registerSchema } from "@/lib/validations/user";
 import { sendVerificationEmail } from "@/lib/email/sendVerificationEmail";
+import { Error as MongooseError } from "mongoose";
+import { MongoServerError } from "mongodb";
 
 export async function POST(req: NextRequest) {
     console.log("[Register] Request received at", new Date().toISOString());
@@ -70,33 +72,56 @@ export async function POST(req: NextRequest) {
             },
             { status: 201 }
         );
-    } catch (err: any) {
-        if (err.name === "ValidationError") {
-            const firstError = Object.values(err.errors)[0] as any;
-            console.error("[Register] ✗ Validation error:", firstError.message);
+    } catch (err: unknown) {
+        // Mongoose validation error
+        if (err instanceof MongooseError.ValidationError) {
+            const firstError = Object.values(err.errors)[0];
+
+            console.error(
+                "[Register] ✗ Validation error:",
+                firstError?.message
+            );
+
             return NextResponse.json(
-                { success: false, message: firstError.message },
+                {
+                    success: false,
+                    message: firstError?.message ?? "Validation failed",
+                },
                 { status: 400 }
             );
         }
 
-        if (err.code === 11000) {
-            const field = Object.keys(err.keyPattern)[0];
+        // MongoDB duplicate key error
+        if (err instanceof MongoServerError && err.code === 11000) {
+            const field = Object.keys(err.keyPattern ?? {})[0] ?? "Field";
+
             console.error("[Register] ✗ Duplicate field:", field);
+
             return NextResponse.json(
-                { success: false, message: `${field} is already taken` },
+                {
+                    success: false,
+                    message: `${field} is already taken`,
+                },
                 { status: 409 }
             );
         }
 
-        console.error("[Register] ✗ Unexpected error:", {
-            message: err.message,
-            code: err.code,
-            name: err.name,
-            timestamp: new Date().toISOString(),
-        });
+        // Unknown/unexpected error
+        if (err instanceof Error) {
+            console.error("[Register] ✗ Unexpected error:", {
+                message: err.message,
+                name: err.name,
+                timestamp: new Date().toISOString(),
+            });
+        } else {
+            console.error("[Register] ✗ Unexpected non-Error:", err);
+        }
+
         return NextResponse.json(
-            { success: false, message: "Registration failed" },
+            {
+                success: false,
+                message: "Registration failed",
+            },
             { status: 500 }
         );
     }

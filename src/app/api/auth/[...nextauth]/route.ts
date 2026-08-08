@@ -1,4 +1,4 @@
-import NextAuth, {DefaultSession, Session} from "next-auth";
+import NextAuth, { AuthOptions, DefaultSession, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { User } from "@/models";
@@ -52,7 +52,7 @@ async function generateUniqueUsername(): Promise<string> {
 }
 
 
-const handler = NextAuth({
+const authOptions: AuthOptions = {
     providers: [
         // Email/Password Provider
         CredentialsProvider({
@@ -120,7 +120,7 @@ const handler = NextAuth({
 
     callbacks: {
         // Handle JWT token creation/update
-        async jwt({ token, user, account }) {
+        async jwt({ token, user, account }: { token: JWT; user?: { id?: string; email?: string | null; roles?: string[]; profileCompleted?: boolean; name?: string | null; image?: string | null }; account?: { provider?: string } | null }) {
             if (user) {
                 token.id = user.id;
                 token.email = user.email;
@@ -174,7 +174,7 @@ const handler = NextAuth({
         },
 
         // Handle sign-in event
-        async signIn({ user, account }) {
+        async signIn({ user, account }: { user?: unknown; account?: { provider?: string } | null }) {
             try {
                 await connectToDatabase();
 
@@ -213,7 +213,7 @@ const handler = NextAuth({
     secret: process.env.NEXTAUTH_SECRET,
 
     debug: process.env.NODE_ENV === "development",
-});
+};
 
-
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import LogoParticles from "@/components/logo-particles"
 import Sidebar from "@/components/sidebar"
-import { API_LOGO_PATH } from "@/lib/api-logo-path"
-import { KEYS_LOGO_PATH } from "@/lib/keys-logo-path"
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 
@@ -153,25 +150,6 @@ export default function RootLayout({
     return (
         <html lang="en">
         <body className="font-sans antialiased bg-black">
-        <LogoParticles
-            logos={[
-                {
-                    path: API_LOGO_PATH,
-                    color: "#0022ff",
-                    height: 100,
-                    mobileHeight: 60,
-                },
-                {
-                    path: KEYS_LOGO_PATH,
-                    color: "#FF9900",
-                    height: 100,
-                    mobileHeight: 100,
-                },
-            ]}
-            gap={40}
-            mobileGap={20}
-        />
-
         <AuthProvider>
             <ThemeProvider defaultTheme="system" storageKey="theme-pref">
                 <Suspense fallback={null}>

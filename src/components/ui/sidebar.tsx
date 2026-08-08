@@ -658,14 +658,14 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean
 }
 >(({ className, showIcon = false, ...props }, ref) => {
-    // Random width between 50 to 90%. Generated once via ref (not state) so we
-    // don't trigger a setState-in-effect re-render; hydration mismatch is
-    // expected and intentionally suppressed since the value is only cosmetic.
-    const widthRef = React.useRef<string | null>(null)
-    if (widthRef.current === null) {
-        widthRef.current = `${Math.floor(Math.random() * 40) + 50}%`
-    }
-    const width = widthRef.current
+    // Random width between 50 to 90%. A lazy useState initializer runs exactly
+    // once during render (unlike reading a ref, which React now disallows
+    // during render), so this needs no effect and no ref. The value will
+    // differ between server and client renders, which is expected and
+    // intentionally suppressed below since it's purely cosmetic.
+    const [width] = React.useState(
+        () => `${Math.floor(Math.random() * 40) + 50}%`,
+    )
 
     return (
         <div

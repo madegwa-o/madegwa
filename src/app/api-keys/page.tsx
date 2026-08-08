@@ -130,7 +130,7 @@ export default function ApiKeysPage() {
 
                     {filtered.length === 0 && (
                         <div className="px-5 py-10 text-center text-sm text-white/40">
-                            No projects match "{query}".
+                            No projects match &quot;{query}&quot;.
                         </div>
                     )}
                 </GlassCard>

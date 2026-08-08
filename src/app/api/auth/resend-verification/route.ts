@@ -72,9 +72,10 @@ export async function POST(req: NextRequest) {
             success: true,
             message: "Verification email sent successfully",
         });
-    } catch (err: any) {
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
         console.error("[Resend Verification] ✗ Error:", {
-            message: err.message,
+            message,
             timestamp: new Date().toISOString(),
         });
         return NextResponse.json(

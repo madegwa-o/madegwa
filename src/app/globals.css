@@ -1,41 +1,5 @@
 @import "tailwindcss";
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 232 100% 50%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 36 100% 50%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 232 100% 95%;
-  --accent-foreground: 232 100% 30%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 232 100% 50%;
-  --chart-1: 232 100% 50%;
-  --chart-2: 36 100% 50%;
-  --chart-3: 173 58% 39%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --radius: 0.5rem;
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 232 100% 50%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 36 100% 95%;
-  --sidebar-accent-foreground: 36 100% 20%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 232 100% 50%;
-}
-
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -61,24 +25,48 @@
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
   --radius-lg: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-
+/*
+  :root and .dark MUST share the same cascade layer. If :root sits
+  unlayered while .dark is inside @layer base (or vice versa), the
+  unlayered block always wins outright — regardless of class, source
+  order, or specificity — because CSS Cascade Layers are resolved
+  before specificity. That was silently forcing light-mode values
+  everywhere, even under html.dark.
+*/
 @layer base {
   :root {
-
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 232 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 36 100% 50%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 232 100% 95%;
+    --accent-foreground: 232 100% 30%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 232 100% 50%;
+    --chart-1: 232 100% 50%;
+    --chart-2: 36 100% 50%;
+    --chart-3: 173 58% 39%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.75rem;
   }
+
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
@@ -104,13 +92,40 @@
     --chart-3: 160 60% 45%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 232 100% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 36 30% 16%;
-    --sidebar-accent-foreground: 36 100% 70%;
-    --sidebar-border: 0 0% 14.9%;
-    --sidebar-ring: 232 100% 62%;
   }
+
+  /*
+    Body must stay transparent — LogoParticles is the real background
+    (fixed, -z-10). Solid bg-black/bg-white here would hide it.
+  */
+  body {
+    background: transparent;
+  }
+}
+
+/*
+  Glass surface utilities — floating overlays (dropdowns, tooltips,
+  project cards, the create-project form) so LogoParticles reads
+  through underneath, Claude-app style.
+*/
+@utility glass {
+  background-color: hsl(var(--card) / 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border) / 0.6);
+}
+
+@utility glass-subtle {
+  background-color: hsl(var(--card) / 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.4);
+}
+
+/* Near-opaque structural chrome — sidebar, primary nav */
+@utility glass-solid {
+  background-color: hsl(var(--card) / 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsl(var(--border) / 0.5);
 }

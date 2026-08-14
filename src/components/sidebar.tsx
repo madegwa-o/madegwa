@@ -100,7 +100,6 @@ function IconDownload({ className }: { className?: string }) {
     )
 }
 
-// Replaces IconPalette — used for the theme toggle rail button
 function IconSunMoon({ className }: { className?: string }) {
     return (
         <svg className={className} {...ICON_PROPS}>
@@ -133,7 +132,6 @@ const NAV_ITEMS: NavItem[] = [
     { id: "environments", label: "Environments", href: "/environments", icon: IconLayers },
     { id: "docs", label: "Docs & snippets", href: "/docs", icon: IconCode },
     { id: "team", label: "Team", href: "/team", icon: IconBriefcase },
-    // "appearance" removed — theme toggle now lives as its own rail button below
 ]
 
 function RailButton({
@@ -156,15 +154,17 @@ function RailButton({
             <Icon
                 className={[
                     "h-5 w-5 transition-colors",
-                    active ? "text-white" : "text-white/70 group-hover:text-white",
+                    active
+                        ? "text-accent-foreground"
+                        : "text-muted-foreground group-hover:text-foreground",
                 ].join(" ")}
             />
 
             {badge && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#0022ff]" />
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
             )}
 
-            <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-md border border-white/10 bg-black/90 px-2 py-1 text-xs text-white opacity-0 backdrop-blur-xl transition-opacity duration-150 group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-md border border-border bg-popover/90 backdrop-blur-md px-2 py-1 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
                 {label}
             </span>
         </>
@@ -172,7 +172,7 @@ function RailButton({
 
     const className = [
         "group relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-        active ? "bg-white/10" : "hover:bg-white/[0.07]",
+        active ? "bg-accent" : "hover:bg-accent/60",
     ].join(" ")
 
     if (href) {
@@ -206,42 +206,38 @@ function AccountMenu() {
         await signOut({ callbackUrl: "/" })
     }
 
-    // Loading skeleton — mirrors the header's pulse state while session hydrates
     if (status === "loading") {
-        return <div className="h-9 w-9 rounded-full bg-white/10 animate-pulse" />
+        return <div className="h-9 w-9 rounded-full bg-accent animate-pulse" />
     }
 
-    // Signed out — fall back to a plain sign-in link styled like the other rail icons
     if (!session?.user) {
         return (
             <Link
                 href="/auth/login"
                 aria-label="Sign in"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-white/70 transition-colors hover:bg-white/[0.14] hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-accent/60 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
                 <IconUser className="h-4 w-4" />
             </Link>
         )
     }
 
-    // Radix's DropdownMenu closes on outside click / Escape natively —
-    // no extra useRef + mousedown listener needed like in the header.
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <button
                     aria-label="Account"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-xs font-medium text-white transition-colors hover:bg-white/[0.14]"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-accent/60 text-xs font-medium text-accent-foreground transition-colors hover:bg-accent"
                 >
                     <Avatar className="h-9 w-9">
                         <AvatarImage src={session.user.image || undefined} alt={session.user.name || "User"} />
-                        <AvatarFallback className="bg-transparent text-white">
+                        <AvatarFallback className="bg-transparent text-accent-foreground">
                             {getUserInitials(session.user.name)}
                         </AvatarFallback>
                     </Avatar>
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="end" className="w-56">
+            <DropdownMenuContent side="right" align="end" className="w-56 glass">
                 <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{session.user.name}</p>
@@ -278,7 +274,7 @@ export default function Sidebar() {
             <button
                 onClick={() => setCollapsed(false)}
                 aria-label="Expand sidebar"
-                className="fixed left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-white/70 backdrop-blur-xl transition-colors hover:bg-white/[0.1] hover:text-white"
+                className="fixed left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-lg glass-solid text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
                 <IconPanel className="h-4.5 w-4.5" />
             </button>
@@ -286,11 +282,11 @@ export default function Sidebar() {
     }
 
     return (
-        <aside className="fixed left-0 top-0 z-20 flex h-dvh w-16 flex-col items-center border-r border-white/10 bg-white/[0.04] py-3 backdrop-blur-xl">
+        <aside className="fixed left-0 top-0 z-20 flex h-dvh w-16 flex-col items-center glass-solid py-3">
             <button
                 onClick={() => setCollapsed(true)}
                 aria-label="Collapse sidebar"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
             >
                 <IconPanel className="h-4.5 w-4.5" />
             </button>
@@ -320,7 +316,7 @@ export default function Sidebar() {
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 />
 
-                <div className="my-2 h-px w-8 bg-white/10" />
+                <div className="my-2 h-px w-8 bg-border" />
 
                 <AccountMenu />
             </div>

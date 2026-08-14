@@ -7,7 +7,6 @@ import { KEYS_LOGO_PATH } from "@/lib/keys-logo-path"
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 
-
 import { AuthProvider } from "@/components/auth-provider";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -15,11 +14,8 @@ import { Suspense } from "react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import InstallPrompt from "@/components/InstallPrompt";
 import { NotificationDisplay } from "@/components/notifications/notification-display";
-import { Toaster} from "sonner"
+import { Toaster } from "sonner"
 
-// -----------------
-// Font Configuration
-// -----------------
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
@@ -30,9 +26,6 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-// -----------------
-// Viewport (Next.js 15+)
-// -----------------
 export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
@@ -44,64 +37,33 @@ export const viewport: Viewport = {
     colorScheme: "light dark"
 };
 
-// -----------------
-// Metadata
-// -----------------
 export const metadata: Metadata = {
     metadataBase: new URL("https://paysuit.aistartupclub.com"),
-
     title: {
         default: "Paysuit — M-Pesa Payments for Developers",
         template: "%s | Paysuit Fintech",
     },
-
     description:
         "Add M-Pesa payments to your applications in minutes. One API, instant settlement, zero bureaucracy.",
-
     applicationName: "Paysuit",
     generator: "Next.js",
     manifest: "/manifest.json",
-
     keywords: [
-        "Paysuit",
-        "Paysuit Fintech",
-        "M-Pesa API",
-        "Daraja API",
-        "payments API",
-        "mobile money integration",
-        "developer payments",
-        "payments infrastructure",
-        "African fintech",
-        "fintech",
-        "M-Pesa STK Push",
-        "Paysuit SDK"
+        "Paysuit", "Paysuit Fintech", "M-Pesa API", "Daraja API", "payments API",
+        "mobile money integration", "developer payments", "payments infrastructure",
+        "African fintech", "fintech", "M-Pesa STK Push", "Paysuit SDK"
     ],
-
-    authors: [
-        {
-            name: "Oscar Madegwa",
-            url: "https://madegwa.pages.dev",
-        },
-    ],
-
+    authors: [{ name: "Oscar Madegwa", url: "https://madegwa.pages.dev" }],
     creator: "Paysuit Fintech",
     publisher: "Paysuit Fintech",
-
     icons: {
         icon: [
             { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
             { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" }
         ],
         apple: "/icons/apple-touch-icon.png",
-        other: [
-            {
-                rel: "mask-icon",
-                url: "/icons/android-chrome-192x192.png",
-                color: "#00C853"
-            }
-        ],
+        other: [{ rel: "mask-icon", url: "/icons/android-chrome-192x192.png", color: "#00C853" }],
     },
-
     openGraph: {
         type: "website",
         url: "https://paysuit.aistartupclub.com",
@@ -109,71 +71,64 @@ export const metadata: Metadata = {
         description:
             "The fastest way to integrate M-Pesa payments. Clean APIs, instant settlement, built for developers.",
         siteName: "Paysuit",
-        images: [
-            {
-                url: "https://paysuit.aistartupclub.com/og-image.png",
-                width: 1200,
-                height: 630,
-                alt: "Paysuit — M-Pesa Payments for Developers"
-            }
-        ],
+        images: [{
+            url: "https://paysuit.aistartupclub.com/og-image.png",
+            width: 1200, height: 630,
+            alt: "Paysuit — M-Pesa Payments for Developers"
+        }],
     },
-
     twitter: {
         card: "summary_large_image",
         title: "Paysuit — M-Pesa Payments for Developers",
-        description:
-            "Integrate M-Pesa payments in minutes using clean APIs and modern SDKs.",
+        description: "Integrate M-Pesa payments in minutes using clean APIs and modern SDKs.",
         images: ["https://paysuit.aistartupclub.com/og-image.png"],
         creator: "@paysuit"
     },
-
     category: "finance",
-    alternates: {
-        canonical: "https://paysuit.aistartupclub.com/"
-    },
-
+    alternates: { canonical: "https://paysuit.aistartupclub.com/" },
     appleWebApp: {
         capable: true,
         title: "Paysuit",
         statusBarStyle: "black-translucent"
     },
-
     formatDetection: { telephone: false }
 };
 
-// -----------------
-// Root Layout
-// -----------------
 export default function RootLayout({
                                        children,
                                    }: {
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
-        <body className="font-sans antialiased bg-black">
-        <LogoParticles
-            logos={[
-                {
-                    path: API_LOGO_PATH,
-                    color: "#0022ff",
-                    height: 100,
-                    mobileHeight: 60,
-                },
-                {
-                    path: KEYS_LOGO_PATH,
-                    color: "#FF9900",
-                    height: 100,
-                    mobileHeight: 100,
-                },
-            ]}
-            gap={40}
-            mobileGap={20}
-        />
-
+        <html lang="en" suppressHydrationWarning>
+        <body className="font-sans antialiased">
         <AuthProvider>
-            <ThemeProvider defaultTheme="system" storageKey="theme-pref">
+            <ThemeProvider defaultTheme="system">
+                {/*
+                  LogoParticles MUST live inside ThemeProvider — it calls
+                  useTheme() and needs the real context, not the fallback
+                  default. It was previously rendered as a sibling above
+                  ThemeProvider, so the toggle never reached it.
+                */}
+                <LogoParticles
+                    logos={[
+                        {
+                            path: API_LOGO_PATH,
+                            color: "#0022ff",
+                            height: 100,
+                            mobileHeight: 60,
+                        },
+                        {
+                            path: KEYS_LOGO_PATH,
+                            color: "#FF9900",
+                            height: 100,
+                            mobileHeight: 100,
+                        },
+                    ]}
+                    gap={40}
+                    mobileGap={20}
+                />
+
                 <Suspense fallback={null}>
                     <Toaster />
                     <Sidebar />
@@ -191,7 +146,6 @@ export default function RootLayout({
             </ThemeProvider>
         </AuthProvider>
 
-        {/* SEO Structured Data */}
         <Script
             id="structured-data"
             type="application/ld+json"

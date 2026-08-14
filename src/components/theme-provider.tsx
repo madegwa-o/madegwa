@@ -25,11 +25,13 @@ const ThemeProviderContext = React.createContext<ThemeProviderState>(initialStat
 export function ThemeProvider({
                                   children,
                                   defaultTheme = "system",
-                                  storageKey = "kia-theme",
+                                  storageKey = "theme",
                                   ...props
                               }: ThemeProviderProps) {
+    const stored = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null
+    const isValidTheme = (t: string | null): t is Theme => t === "light" || t === "dark" || t === "system"
     const [theme, setTheme] = React.useState<Theme>(
-        () => (typeof window !== "undefined" ? (localStorage.getItem(storageKey) as Theme) : defaultTheme) || defaultTheme,
+        isValidTheme(stored) ? stored : defaultTheme
     )
 
     React.useEffect(() => {

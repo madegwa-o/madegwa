@@ -1,141 +1,71 @@
-"use client"
+import { redirect, notFound } from "next/navigation"
+import { getCurrentUser } from "@/lib/auth/getCurrentUser"
+import { connectToDatabase } from "@/lib/db"
+import { Project } from "@/models"
+import KeysPanel from "@/components/projects/KeysPanel"
+import MembersPanel from "@/components/projects/MembersPanel"
 
+export default async function ProjectPage({
+                                              params,
+                                          }: {
+    params: Promise<{ projectId: string }>
+}) {
+    const user = await getCurrentUser()
+    if (!user) redirect("/auth/login")
 
-import { useState } from "react"
-import GlassCard from "@/components/glass-card"
+    const { projectId } = await params
+    await connectToDatabase()
 
-interface ApiKeyEntry {
-    id: string
-    projectName: string
-    keyPreview: string
-    updatedLabel: string
-}
+    const project = await Project.findById(projectId).select("-keys.value").lean()
+    if (!project) notFound()
 
-const ENTRIES: ApiKeyEntry[] = [
-    { id: "1", projectName: "AWS logo SVG path", keyPreview: "sk-live-••••7f2a", updatedLabel: "1 hour ago" },
-    { id: "2", projectName: "4c hair wave training routine", keyPreview: "sk-live-••••91bd", updatedLabel: "3 days ago" },
-    { id: "3", projectName: "JBoss server startup config", keyPreview: "sk-live-••••44e1", updatedLabel: "4 days ago" },
-    { id: "4", projectName: "Project Drifer context overview", keyPreview: "sk-live-••••c02f", updatedLabel: "5 days ago" },
-    { id: "5", projectName: "Face recognition pipeline", keyPreview: "sk-live-••••8a3d", updatedLabel: "Jul 25" },
-    { id: "6", projectName: "Hackathon application", keyPreview: "sk-live-••••2b6c", updatedLabel: "Jul 24" },
-]
+    const isOwner = project.ownerId === user.id
+    const member = project.members?.find((m) => m.userId === user.id)
+    const isMember = isOwner || !!member
+    if (!isMember) notFound()
 
-export default function ProjectsPage() {
-    const [query, setQuery] = useState("")
-    const [selectMode, setSelectMode] = useState(false)
-    const [selected, setSelected] = useState<Set<string>>(new Set())
+    const canWrite = isOwner || member?.role === "write"
 
-    const filtered = ENTRIES.filter((e) =>
-        e.projectName.toLowerCase().includes(query.toLowerCase())
-    )
+    const keys = (project.keys ?? []).map((k) => ({
+        id: k._id.toString(),
+        name: k.name,
+        createdAt: k.createdAt?.toString() ?? "",
+        updatedAt: k.updatedAt?.toString() ?? "",
+    }))
 
-    function toggleSelected(id: string) {
-        setSelected((prev) => {
-            const next = new Set(prev)
-            if (next.has(id)) next.delete(id)
-            else next.add(id)
-            return next
-        })
-    }
+    const members = (project.members ?? []).map((m) => ({
+        userId: m.userId,
+        email: m.email,
+        name: m.name ?? "",
+        role: m.role as "read" | "write",
+    }))
 
     return (
+        <main className="min-h-dvh px-8 py-12 text-foreground lg:px-16">
+            <div className="mx-auto max-w-5xl w-full">
+                <a href="/dashboard"
+                    className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                ← All projects
+            </a>
 
-        <main className="min-h-dvh flex items-center justify-center p-6">
-            <GlassCard accent="#0022ff">
-            <div className="mx-auto max-w-4xl">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                    <h1 className="text-white text-3xl font-medium">
-                        API keys
-                    </h1>
+            <header className="mb-10 border-b border-border pb-8">
+                <p className="mb-3 font-mono text-xs uppercase tracking-[0.28em] text-primary">
+                    {project.visibility === "PUBLIC" ? "Public project" : "Private project"}
+                </p>
+                <h1 className="text-4xl font-semibold tracking-tight">{project.name}</h1>
+            </header>
 
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                            >
-                                <circle cx="11" cy="11" r="7" />
-                                <path d="m21 21-4.3-4.3" />
-                            </svg>
-                            <input
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search projects"
-                                className="w-48 rounded-full border border-white/10 bg-white/[0.06] py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none backdrop-blur-xl focus:border-white/20"
-                            />
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                setSelectMode((v) => !v)
-                                setSelected(new Set())
-                            }}
-                            className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-white backdrop-blur-xl transition-colors hover:bg-white/[0.09]"
-                        >
-                            {selectMode ? "Cancel" : "Select keys"}
-                        </button>
-
-                        <button className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90">
-                            New project
-                        </button>
-                    </div>
-                </div>
-
-                <GlassCard interactive={false} className="!p-0 overflow-hidden">
-                    {filtered.map((entry, i) => (
-                        <button
-                            key={entry.id}
-                            onClick={() =>
-                                selectMode
-                                    ? toggleSelected(entry.id)
-                                    : undefined
-                            }
-                            className={[
-                                "group flex w-full items-center justify-between px-5 py-4 text-left transition-colors",
-                                i !== filtered.length - 1
-                                    ? "border-b border-white/[0.06]"
-                                    : "",
-                                "hover:bg-white/[0.05]",
-                            ].join(" ")}
-                        >
-                            <div className="flex items-center gap-3 min-w-0">
-                                {selectMode && (
-                                    <span
-                                        className={[
-                                            "h-4 w-4 shrink-0 rounded-full border",
-                                            selected.has(entry.id)
-                                                ? "border-[#0022ff] bg-[#0022ff]"
-                                                : "border-white/25",
-                                        ].join(" ")}
-                                    />
-                                )}
-                                <div className="min-w-0">
-                                    <p className="truncate text-[15px] text-white">
-                                        {entry.projectName}
-                                    </p>
-                                    <p className="mt-0.5 font-mono text-xs text-white/40">
-                                        {entry.keyPreview}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <span className="shrink-0 pl-4 text-xs text-white/40">
-                                {entry.updatedLabel}
-                            </span>
-                        </button>
-                    ))}
-
-                    {filtered.length === 0 && (
-                        <div className="px-5 py-10 text-center text-sm text-white/40">
-                            No projects match &quot;{query}&quot;.
-                        </div>
-                    )}
-                </GlassCard>
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+                <KeysPanel projectId={projectId} initialKeys={keys} canWrite={canWrite} />
+                <MembersPanel
+                    projectId={projectId}
+                    initialMembers={members}
+                    isOwner={isOwner}
+                    currentUserId={user.id}
+                />
             </div>
-            </GlassCard>
-        </main>
-    )
+        </div>
+</main>
+)
 }

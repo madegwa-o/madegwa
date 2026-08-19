@@ -1,69 +1,61 @@
 // app/api/projects/[projectId]/route.ts
-import { NextRequest, NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/auth/getCurrentUser"
-import { connectToDatabase } from "@/lib/db"
-import { Project } from "@/models"
-import { authorizeProject } from "@/lib/services/authorizeProject"
+import type { NextRequest } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { canUserViewProject } from "@/lib/access/projects";
+import { fetchProjectGraph } from "@/lib/relations";
+import { ok, forbidden, notFound } from "@/lib/api/respond";
+import type { ProjectField } from "@/lib/DataFetchingFromDb/project/profile";
+import type { ApiKeyField } from "@/lib/DataFetchingFromDb/apikey/profile";
 
-export async function GET(
-    _req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+// GET /api/projects/:projectId?fields=name,visibility&keyFields=name,prefix,lastUsedAt
+// PUBLIC projects are viewable signed-out (canUserViewProject allows a null
+// user for those); PRIVATE ones need the caller to be owner or an ACTIVE
+// member. Attached keys always come back scoped with their per-project
+// `scopes` (see loadApiKeysByProjectIds) — never the raw secret.
+//
+// Param is `projectId` here — matches the nested
+// app/api/projects/[projectId]/keys/[keyId]/fork/route.ts, which Next.js
+// requires (sibling dynamic routes under the same path must share the
+// same segment name). This is the recommended variant — see below.
+export async function GET(req: NextRequest, { params }: { params: { projectId: string } }) {
+    const user = await getCurrentUser();
 
-    await connectToDatabase()
+    const allowed = await canUserViewProject(user?.id ?? null, params.projectId);
+    if (!allowed) return forbidden();
 
-    try {
-        const project = await authorizeProject(params.projectId, user.id, "read", "-keys.value")
-        return NextResponse.json({ project })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: err.status ?? 500 })
-    }
+    const url = new URL(req.url);
+    const projectFields = url.searchParams.get("fields")?.split(",").map((f) => f.trim()) as
+        | ProjectField[]
+        | undefined;
+    const keyFields = url.searchParams.get("keyFields")?.split(",").map((f) => f.trim()) as
+        | ApiKeyField[]
+        | undefined;
+
+    const graph = await fetchProjectGraph({
+        id: params.projectId,
+        projectFields,
+        include: { apiKeys: { fields: keyFields }, owner: {} },
+    });
+    if (!graph) return notFound();
+
+    return ok(graph);
 }
 
-export async function PATCH(
-    req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    await connectToDatabase()
+// POST /api/projects/:id/fork
+// Returns the new project plus every newly-minted key's raw value, all at
+// once — the batch reveal screen from Design Decisions #5. This is the
+// only time these raw values are ever returned by the API; the caller
+// must show/let the user copy them now.
+export async function POST(_req: Request, { params }: { params: { id: string } }) {
+    const user = await getCurrentUser();
+    if (!user) return unauthorized();
 
     try {
-        const project = await authorizeProject(params.projectId, user.id, "write")
-        const body = await req.json()
-
-        if (typeof body.name === "string") project.name = body.name
-        if (body.visibility === "PUBLIC" || body.visibility === "PRIVATE") {
-            project.visibility = body.visibility
-        }
-
-        await project.save()
-        return NextResponse.json({ project })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: err.status ?? 500 })
+        const result = await forkProject(params.id, user.id, user.email);
+        return ok(result, 201);
+    } catch (err) {
+        if (err instanceof ForkNotAllowedError) return badRequest(err.message);
+        throw err;
     }
-}
-
-export async function DELETE(
-    _req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    await connectToDatabase()
-
-    const project = await Project.findById(params.projectId)
-    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 })
-
-    // Only the owner can delete the whole project
-    if (project.ownerId !== user.id) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
-    await project.deleteOne()
-    return NextResponse.json({ success: true })
 }

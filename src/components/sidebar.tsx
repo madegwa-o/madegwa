@@ -127,7 +127,7 @@ function IconLogOut({ className }: { className?: string }) {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { id: "keys", label: "API keys", href: "/", icon: IconKey },
+    { id: "keys", label: "API keys", href: "/apikeys", icon: IconKey },
     { id: "projects", label: "Projects", href: "/projects", icon: IconFolder },
     { id: "environments", label: "Environments", href: "/environments", icon: IconLayers },
     { id: "docs", label: "Docs & snippets", href: "/docs", icon: IconCode },

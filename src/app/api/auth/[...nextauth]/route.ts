@@ -1,4 +1,4 @@
-import NextAuth, {DefaultSession, Session} from "next-auth";
+import NextAuth, {DefaultSession, NextAuthOptions, Session} from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { User } from "@/models";
@@ -9,17 +9,19 @@ import crypto from "crypto";
 
 
 
-// Extend NextAuth types to include roles
+// Extend NextAuth types to include username
 declare module "next-auth" {
     interface Session {
         user: {
             id?: string | null
+            username?: string | null
             roles?: string[]
             profileCompleted?: boolean
         } & DefaultSession["user"]
     }
     interface User {
         id: string
+        username?: string
         roles?: string[]
         profileCompleted?: boolean
     }
@@ -28,6 +30,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
     interface JWT {
         userId?: string
+        username?: string
         roles?: string[]
         profileCompleted?: boolean
     }
@@ -52,7 +55,7 @@ async function generateUniqueUsername(): Promise<string> {
 }
 
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
     providers: [
         // Email/Password Provider
         CredentialsProvider({
@@ -101,6 +104,7 @@ const handler = NextAuth({
                         email: user.email,
                         name: user.name,
                         image: user.image,
+                        username: user.username,
                         profileCompleted: user.profileCompleted ?? false,
                     };
                 } catch (error: unknown) {
@@ -124,6 +128,7 @@ const handler = NextAuth({
             if (user) {
                 token.id = user.id;
                 token.email = user.email;
+                token.username = user.username;
                 token.roles = user.roles;
                 token.profileCompleted = user.profileCompleted;
             }
@@ -153,6 +158,7 @@ const handler = NextAuth({
                     }
 
                     token.id = dbUser._id.toString();
+                    token.username = dbUser.username;
                     token.roles = dbUser.roles;
                     token.profileCompleted = dbUser.profileCompleted;
                 } catch (error) {
@@ -167,6 +173,7 @@ const handler = NextAuth({
         async session({ session, token }: { session: Session; token: JWT }) {
             if (session.user) {
                 session.user.id = token.id as string;
+                session.user.username = token.username as string;
                 session.user.roles = token.roles as string[];
                 session.user.profileCompleted = token.profileCompleted as boolean;
             }
@@ -213,7 +220,8 @@ const handler = NextAuth({
     secret: process.env.NEXTAUTH_SECRET,
 
     debug: process.env.NODE_ENV === "development",
-});
+};
 
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

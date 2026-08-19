@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -9,12 +9,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Assumption: your NextAuth session/jwt callbacks attach `username` onto
+// session.user the same way they already attach roles/profileCompleted.
+// CurrentUser (server-side) doesn't expose it because nothing server-side
+// has needed it yet — this is a client-side read of the raw session.
+interface SessionUser {
+  username?: string;
+}
+
+function isSafeCallbackUrl(url: string | null): url is string {
+  if (!url) return false;
+  // only allow same-site relative paths — block //evil.com, https://evil.com, etc.
+  return url.startsWith('/') && !url.startsWith('//');
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = isSafeCallbackUrl(rawCallbackUrl) ? rawCallbackUrl : null;
+
+  // Helper to safely extract username
+  const getUsernameFromSession = (session: unknown): string | null => {
+    return (session as { user?: { username?: string } })?.user?.username || null;
+  };
+
+  const resolveFallbackDestination = async (): Promise<string> => {
+    if (callbackUrl) return callbackUrl;
+
+    // Fetch updated session after sign-in
+    const session = await getSession();
+    const username = getUsernameFromSession(session);
+
+    return username ? `/${username}` : '/';
+  };
+
+
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +61,14 @@ function LoginForm() {
         redirect: false,
       });
 
-      if (result?.error) {
-        toast.error('Sign in failed', { description: result.error });
-      } else if (result?.ok) {
+      if (result?.ok) {
         toast.success('Welcome back', { description: 'You are now signed in.' });
-        router.push('/dashboard');
+
+        // Refresh the client cache so NextAuth updates local state
+        router.refresh();
+
+        const destination = await resolveFallbackDestination();
+        router.push(destination);
       }
     } catch (err: unknown) {
       toast.error('Sign in failed', {
@@ -44,7 +81,9 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signIn('google', { callbackUrl: '/dashboard' });
+      // NextAuth handles this redirect server-side, so we can't resolve a
+      // username-based fallback here — only the explicit callbackUrl (if any).
+      await signIn('google', { callbackUrl: callbackUrl ?? '/' });
     } catch (err: unknown) {
       toast.error('Google sign in failed', {
         description: err instanceof Error ? err.message : 'Something went wrong. Please try again.',
@@ -53,14 +92,14 @@ function LoginForm() {
   };
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-        {/* Background gradient effect */}
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative">
+        {/* Ambient accent glow — kept even on a transparent page background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-blue-500/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-cyan-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-cyan-500/10 rounded-full blur-3xl"></div>
         </div>
 
-        <Card className="w-full max-w-md border border-slate-700 bg-slate-950/50 backdrop-blur-sm relative z-10">
+        <Card className="w-full max-w-md border border-white/10 bg-slate-900/30 backdrop-blur-xl shadow-2xl shadow-black/20 relative z-10">
           <CardHeader className="space-y-1">
             <div className="text-xs font-mono text-slate-400 mb-2">COSEKE.AUTH</div>
             <CardTitle className="text-3xl font-bold text-white">Authenticate</CardTitle>
@@ -74,7 +113,7 @@ function LoginForm() {
               <button
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed h-10 transition-colors flex items-center justify-center gap-2 border border-slate-700"
+                  className="w-full rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed h-10 transition-colors flex items-center justify-center gap-2 border border-white/10 backdrop-blur-sm"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -89,10 +128,10 @@ function LoginForm() {
             {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700"></div>
+                <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="px-2 bg-slate-950 text-slate-500">Standard Protocol</span>
+                <span className="px-2 bg-transparent text-slate-500">Standard Protocol</span>
               </div>
             </div>
 
@@ -106,7 +145,7 @@ function LoginForm() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     disabled={isLoading}
-                    className="bg-slate-900 border-slate-700 text-white placeholder-slate-500"
+                    className="bg-white/5 border-white/10 text-white placeholder-slate-500 backdrop-blur-sm"
                 />
               </div>
 
@@ -118,7 +157,7 @@ function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
-                    className="bg-slate-900 border-slate-700 text-white placeholder-slate-500"
+                    className="bg-white/5 border-white/10 text-white placeholder-slate-500 backdrop-blur-sm"
                 />
               </div>
 
@@ -156,7 +195,7 @@ export default function LoginPage() {
   return (
       <Suspense
           fallback={
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           }

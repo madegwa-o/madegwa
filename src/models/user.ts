@@ -2,12 +2,8 @@ import { Schema, model, models, Types, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export enum Role {
-    INTERN = "INTERN",
-    EMPLOYEE = "EMPLOYEE",
-    CEO = "CEO",
-    MANAGER = "MANAGER",
-    ADMIN = "ADMIN",
     USER = "USER",
+    ADMIN = "ADMIN",
 }
 
 export interface IUser extends Document {
@@ -18,6 +14,10 @@ export interface IUser extends Document {
     password?: string;
     image?: string;
     phone?: string;
+    bio?: string;
+    cover?: string;
+    location?: string;
+    website?: string;
     roles: Role[];
     isActive: boolean;
     lastLogin?: Date;
@@ -30,12 +30,12 @@ export interface IUser extends Document {
 
     passwordResetToken?: string;
     passwordResetExpires?: Date;
-    
+
     // OAuth fields
     googleId?: string;
-    authProvider?: 'email' | 'google';
+    authProvider?: "email" | "google";
     profileCompleted?: boolean;
-    
+
     comparePassword(candidate: string): Promise<boolean>;
     hasRole(role: Role): boolean;
     addRole(role: Role): void;
@@ -85,6 +85,29 @@ const UserSchema = new Schema<IUser>(
             trim: true,
             default: null,
         },
+        bio: {
+            type: String,
+            trim: true,
+            maxlength: [280, "Bio cannot exceed 280 characters"],
+            default: null,
+        },
+        cover: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+        location: {
+            type: String,
+            trim: true,
+            maxlength: [100, "Location cannot exceed 100 characters"],
+            default: null,
+        },
+        website: {
+            type: String,
+            trim: true,
+            match: [/^https?:\/\/.+/, "Website must be a valid URL starting with http:// or https://"],
+            default: null,
+        },
         roles: {
             type: [String],
             enum: Object.values(Role),
@@ -107,7 +130,6 @@ const UserSchema = new Schema<IUser>(
             default: null,
         },
 
-        // inside UserSchema fields, alongside isActive/lastLogin
         emailVerified: {
             type: Boolean,
             default: false,
@@ -129,7 +151,7 @@ const UserSchema = new Schema<IUser>(
             type: Date,
             select: false,
         },
-        
+
         // OAuth fields
         googleId: {
             type: String,
@@ -139,8 +161,8 @@ const UserSchema = new Schema<IUser>(
         },
         authProvider: {
             type: String,
-            enum: ['email', 'google'],
-            default: 'email',
+            enum: ["email", "google"],
+            default: "email",
             index: true,
         },
         profileCompleted: {
@@ -166,7 +188,6 @@ const UserSchema = new Schema<IUser>(
             },
         },
     }
-
 );
 
 // 📇 Compound indexes for common queries

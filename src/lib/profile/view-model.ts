@@ -1,3 +1,5 @@
+// view-model.ts
+
 import type { Types } from "mongoose";
 
 /**
@@ -7,13 +9,14 @@ import type { Types } from "mongoose";
  * empty state today and picking them up later is a one-line change to
  * `toProfileViewModel` below, not a rewrite of any component.
  */
+
 export interface ProfileViewModel {
     id: string;
     username: string;
     name: string;
-    avatar: string | null;
-    bio: string | null;
-    cover: string | null;
+    avatar: string | null;   // genuinely nullable — no fallback applied
+    bio: string;             // always has DEFAULT_BIO fallback
+    cover: string;           // always has FALLBACK_COVER fallback
     location: string | null;
     website: string | null;
     joined: Date;
@@ -26,14 +29,15 @@ interface SourceUser {
     name: string;
     image?: string | null;
     createdAt: Date;
-    lastLogin?: Date | null;
-    bio: string;
-    cover: string;
-    location: string | null;
-    website: string | null;
+    lastSeen?: Date | null;
+    bio?: string | null;
+    cover?: string | null;
+    location?: string | null;
+    website?: string | null;
 }
 
-const FALLBACK_COVER = "https://images.unsplash.com/photo-1518770660439-4636190af475";
+//const FALLBACK_COVER = "https://images.unsplash.com/photo-1518770660439-4636190af475";
+const FALLBACK_COVER = "/fallback.jpg";
 const DEFAULT_BIO = "Shipping code, breaking prod, fixing it before anyone notices. Powered by coffee and stack traces.";
 
 export function toProfileViewModel(user: SourceUser): ProfileViewModel {
@@ -42,11 +46,11 @@ export function toProfileViewModel(user: SourceUser): ProfileViewModel {
         username: user.username,
         name: user.name,
         avatar: user.image ?? null,
-        bio: user.bio ?? DEFAULT_BIO,
-        cover: user.cover ?? FALLBACK_COVER,
+       cover: user.cover || FALLBACK_COVER,
+        bio: user.bio || DEFAULT_BIO,
         location: user.location ?? null,
         website: user.website ?? null,
         joined: user.createdAt,
-        lastSeen: user.lastLogin ?? null,
+        lastSeen: user.lastSeen ?? null,
     };
 }

@@ -19,7 +19,7 @@ export function ProfileHeader({ profile, isOwner }: { profile: ProfileViewModel;
                 an empty <img> or a stock photo standing in for real content. */}
             <div className="relative h-48 w-full overflow-hidden rounded-lg sm:h-64">
                 <Image
-                    src={profile.cover} // or just profile.cover if the fallback's already baked into cover by toProfileViewModel
+                    src={profile.cover} 
                     alt=""
                     fill
                     className="object-cover"

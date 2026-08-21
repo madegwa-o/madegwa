@@ -22,6 +22,7 @@ const SELECTABLE_FIELDS = [
     "roles",
     "isActive",
     "lastLogin",
+    "lastSeen",
     "createdAt",
     "updatedAt",
     "emailVerified",
@@ -31,7 +32,9 @@ const SELECTABLE_FIELDS = [
 
 export type UserProfileField = (typeof SELECTABLE_FIELDS)[number];
 
-export type UserProfile = Pick<IUser, UserProfileField extends keyof IUser ? UserProfileField : never>;
+// Extract distributes over the union, checking each field individually —
+// unlike the bare conditional, one mismatch can't silently wipe out every field.
+export type UserProfile = Pick<IUser, Extract<UserProfileField, keyof IUser>>;
 
 function buildProjection(fields?: readonly UserProfileField[]): string {
     if (!fields || fields.length === 0) return SELECTABLE_FIELDS.join(" ");

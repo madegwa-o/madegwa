@@ -14,6 +14,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import InstallPrompt from "@/components/InstallPrompt";
 import { NotificationDisplay } from "@/components/notifications/notification-display";
 import { Toaster } from "sonner"
+import { LastSeenPing } from "@/components/LastSeenPing";
 
 export default function RootLayout({
                                        children,
@@ -63,7 +64,8 @@ export default function RootLayout({
 
                 <NotificationDisplay />
                 <InstallPrompt />
-                <MobileBottomNav />
+              <MobileBottomNav />
+              <LastSeenPing />
             </ThemeProvider>
         </AuthProvider>
 

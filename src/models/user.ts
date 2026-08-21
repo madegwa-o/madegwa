@@ -21,6 +21,7 @@ export interface IUser extends Document {
     roles: Role[];
     isActive: boolean;
     lastLogin?: Date;
+    lastSeen?: Date;
     createdAt: Date;
     updatedAt: Date;
 
@@ -126,6 +127,10 @@ const UserSchema = new Schema<IUser>(
             index: true,
         },
         lastLogin: {
+            type: Date,
+            default: null,
+        },
+        lastSeen: {
             type: Date,
             default: null,
         },

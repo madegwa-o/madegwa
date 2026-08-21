@@ -44,7 +44,7 @@ export async function getProfilePageData(username: string, viewerId: string | nu
     const user = await getUserProfile({
         by: "username",
         value: username.toLowerCase(),
-        fields: ["_id", "username", "name", "image", "createdAt", "lastLogin", "bio", "cover", "location", "website"],
+        fields: ["_id", "username", "name", "image", "createdAt", "lastSeen", "bio", "cover", "location", "website"],
     });
     if (!user) return null;
 

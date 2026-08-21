@@ -5,7 +5,7 @@ import { canUserViewProject } from "@/lib/access/projects";
 import { fetchProjectGraph } from "@/lib/relations";
 import { ok, forbidden, notFound } from "@/lib/api/respond";
 import type { ProjectField } from "@/lib/DataFetchingFromDb/project/profile";
-import type { ApiKeyField } from "@/lib/DataFetchingFromDb/apikey/profile";
+import type { ApiKeyField } from "@/lib/DataFetchingFromDb/apikeys/profile";
 
 // GET /api/projects/:projectId?fields=name,visibility&keyFields=name,prefix,lastUsedAt
 // PUBLIC projects are viewable signed-out (canUserViewProject allows a null
@@ -39,23 +39,4 @@ export async function GET(req: NextRequest, { params }: { params: { projectId: s
     if (!graph) return notFound();
 
     return ok(graph);
-}
-
-
-// POST /api/projects/:id/fork
-// Returns the new project plus every newly-minted key's raw value, all at
-// once — the batch reveal screen from Design Decisions #5. This is the
-// only time these raw values are ever returned by the API; the caller
-// must show/let the user copy them now.
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
-    const user = await getCurrentUser();
-    if (!user) return unauthorized();
-
-    try {
-        const result = await forkProject(params.id, user.id, user.email);
-        return ok(result, 201);
-    } catch (err) {
-        if (err instanceof ForkNotAllowedError) return badRequest(err.message);
-        throw err;
-    }
 }

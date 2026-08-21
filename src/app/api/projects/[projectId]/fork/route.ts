@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/lib/session";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { forkProject } from "@/lib/forking/fork-project";
 import { ForkNotAllowedError } from "@/lib/forking/errors";
 import { ok, unauthorized, badRequest } from "@/lib/api/respond";

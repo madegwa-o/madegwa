@@ -1,27 +1,42 @@
+// app/api/projects/route.ts
 import type { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
-import { getProjects, type ProjectField } from "@/lib/DataFetchingFromDb/project/profile";
-import { ProjectMemberStatus } from "@/models/project";
-import { ok, unauthorized, parseFields } from "@/lib/api/respond";
+import { createProject } from "@/lib/DataFetchingFromDb/project/mutations";
+import { getProjects } from "@/lib/DataFetchingFromDb/project/profile";
+import { ok, unauthorized, badRequest } from "@/lib/api/respond";
+import { ProjectVisibility } from "@/models/project";
 
-// GET /api/projects?fields=name,visibility,keyCount
-// "My projects" — owned, or ACTIVE membership. A single $or query rather
-// than the batch loaders in lib/relations, since those are built for
-// looking this up for many users at once; here there's exactly one.
-export async function GET(req: NextRequest) {
+// GET /api/projects — every project the signed-in user owns
+export async function GET() {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
 
-    const fields = parseFields(req) as ProjectField[] | undefined;
-    const projects = await getProjects({
-        filter: {
-            $or: [
-                { ownerId: user.id },
-                { members: { $elemMatch: { userId: user.id, status: ProjectMemberStatus.ACTIVE } } },
-            ],
-        },
-        fields,
-    });
-
+    const projects = await getProjects({ filter: { ownerId: user.id } });
     return ok({ projects });
+}
+
+// POST /api/projects — create a new project
+export async function POST(req: NextRequest) {
+    const user = await getCurrentUser();
+    if (!user) return unauthorized();
+
+    const body = await req.json().catch(() => null);
+    if (!body?.name || typeof body.name !== "string") {
+        return badRequest("Project name is required");
+    }
+
+    const visibility =
+        body.visibility === ProjectVisibility.PUBLIC ? ProjectVisibility.PUBLIC : ProjectVisibility.PRIVATE;
+
+    try {
+        const project = await createProject({
+            ownerId: user.id,
+            ownerEmail: user.email!,
+            name: body.name,
+            visibility,
+        });
+        return ok({ project });
+    } catch (error) {
+        return badRequest(error instanceof Error ? error.message : "Could not create project");
+    }
 }

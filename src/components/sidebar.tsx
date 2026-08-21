@@ -268,6 +268,48 @@ export default function Sidebar() {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
     const { theme, setTheme } = useTheme()
+    const { data } = useSession();
+
+    if (data) console.log("detaa: ", data)
+    const username = data?.user?.username
+
+
+      const navItems = username
+          ? [
+                {
+                    id: "keys",
+                    label: "API keys",
+                    href: `/${username}/apikeys`,
+                    icon: IconKey,
+                },
+                {
+                    id: "projects",
+                    label: "Projects",
+                    href: `/${username}/projects`,
+                    icon: IconFolder,
+                },
+                {
+                    id: "environments",
+                    label: "Environments",
+                    href: `/${username}/environments`,
+                    icon: IconLayers,
+                },
+                {
+                    id: "docs",
+                    label: "Docs & snippets",
+                    href: `/docs`,
+                    icon: IconCode,
+                },
+                {
+                    id: "team",
+                    label: "Team",
+                    href: `/${username}/team`,
+                    icon: IconBriefcase,
+                },
+            ]
+          : []
+
+
 
     if (collapsed) {
         return (
@@ -296,7 +338,7 @@ export default function Sidebar() {
             </div>
 
             <nav className="mt-2 flex flex-col items-center gap-1">
-                {NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                     <RailButton
                         key={item.id}
                         icon={item.icon}

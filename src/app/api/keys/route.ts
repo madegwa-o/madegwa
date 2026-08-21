@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
         const { apiKey, rawKey, attached } = await createApiKeyForUser({
             ownerId: user.id,
             name: body.name,
+            rawkey: body.rawkey,
             expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
             projectId: body.projectId ?? null,
         });

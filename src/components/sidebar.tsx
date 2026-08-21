@@ -126,13 +126,6 @@ function IconLogOut({ className }: { className?: string }) {
     )
 }
 
-const NAV_ITEMS: NavItem[] = [
-    { id: "keys", label: "API keys", href: "/apikeys", icon: IconKey },
-    { id: "projects", label: "Projects", href: "/projects", icon: IconFolder },
-    { id: "environments", label: "Environments", href: "/environments", icon: IconLayers },
-    { id: "docs", label: "Docs & snippets", href: "/docs", icon: IconCode },
-    { id: "team", label: "Team", href: "/team", icon: IconBriefcase },
-]
 
 function RailButton({
                         icon: Icon,
@@ -268,9 +261,9 @@ export default function Sidebar() {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
     const { theme, setTheme } = useTheme()
-    const { data } = useSession();
+  const { data } = useSession();
 
-    if (data) console.log("detaa: ", data)
+
     const username = data?.user?.username
 
 

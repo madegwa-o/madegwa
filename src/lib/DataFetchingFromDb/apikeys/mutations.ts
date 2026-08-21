@@ -1,6 +1,6 @@
 // lib/DataFetchingFromDb/apikeys/mutations.ts
 import { connectToDatabase } from "@/lib/db";
-import { ApiKey, generateApiKey } from "@/models/apikey";
+import { ApiKey, encodeApiKey } from "@/models/apikey";
 import { Project } from "@/models/project";
 import { ProjectApiKey } from "@/models/project-apikey";
 import { canUserManageProject } from "@/lib/access/projects";
@@ -8,8 +8,10 @@ import { canUserManageProject } from "@/lib/access/projects";
 interface CreateApiKeyArgs {
     ownerId: string;
     name: string;
+    rawkey: string;
     expiresAt?: Date | null;
-    projectId?: string | null; // optionally attach on creation
+  projectId?: string | null; // optionally attach on creation
+
 }
 
 /**
@@ -18,7 +20,7 @@ interface CreateApiKeyArgs {
  * the schema — the caller (API route) must show it to the user now, since
  * it can't be recovered in this form again.
  */
-export async function createApiKeyForUser({ ownerId, name, expiresAt = null, projectId = null }: CreateApiKeyArgs) {
+export async function createApiKeyForUser({ ownerId, name,rawkey, expiresAt = null, projectId = null }: CreateApiKeyArgs) {
     await connectToDatabase();
 
     const trimmed = name.trim();
@@ -34,7 +36,7 @@ export async function createApiKeyForUser({ ownerId, name, expiresAt = null, pro
         throw new Error("You already have a key with this name");
     }
 
-    const { raw, prefix, hashedKey, encrypted } = generateApiKey();
+    const { raw, prefix, hashedKey, encrypted } = encodeApiKey(rawkey.trim());
 
     const apiKey = await ApiKey.create({
         ownerId,

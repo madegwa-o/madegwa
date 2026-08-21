@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import KeysPanel from "@/components/projects/KeysPanel";
 import MembersPanel from "@/components/projects/MembersPanel";
+import Link from 'next/link'
 
 export default async function ProjectPage({
                                               params,
@@ -47,12 +48,9 @@ export default async function ProjectPage({
         <main className="min-h-dvh px-8 py-12 text-foreground lg:px-16">
             <div className="mx-auto w-full max-w-5xl">
 
-                <a
-                    href="/dashboard"
-                    className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
+                <Link  href="/dashboard" className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground" >
                     ← All projects
-                </a>
+                </Link>
 
                 <header className="mb-10 border-b border-border pb-8">
                     <p className="mb-3 font-mono text-xs uppercase tracking-[0.28em] text-primary">

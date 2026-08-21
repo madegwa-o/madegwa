@@ -12,7 +12,7 @@ import { ok, unauthorized, forbidden, notFound } from "@/lib/api/respond";
 // POST (not GET) because this is a sensitive, side-effect-adjacent action —
 // keeps it out of browser history, proxies, and access logs that treat
 // query strings as loggable.
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
 

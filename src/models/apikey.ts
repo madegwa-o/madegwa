@@ -52,8 +52,8 @@ ApiKeySchema.index({ ownerId: 1, name: 1 }, { unique: true })
 ApiKeySchema.index({ ownerId: 1, createdAt: -1 })
 // NOTE: no separate .index({ hashedKey: 1 }) — `unique: true` above already creates it.
 
-export function generateApiKey() {
-    const raw = crypto.randomBytes(32).toString("hex")
+export function encodeApiKey(raw: string) {
+
     const prefix = raw.slice(0, 8)
     const hashedKey = crypto.createHash("sha256").update(raw).digest("hex")
     const encrypted = encryptSecret(raw)
